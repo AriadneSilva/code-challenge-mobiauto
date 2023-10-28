@@ -4,13 +4,23 @@ import React, {
   useEffect,
   useState,
   useContext,
+  SetStateAction,
+  Dispatch,
 } from "react";
+import { AnoData, MarcasData, ModeloData, ValorData } from "../types/fipe";
 
 interface FipeContextData {
   getMarcas: () => Promise<void>;
   getModelos: (idMarca: string) => Promise<void>;
   getAnos: (idMarca: string, idModelo: string) => Promise<void>;
   getValor: (idMarca: string, idModelo: string, idAno: string) => Promise<void>;
+  dataMarcas: MarcasData[];
+  dataModelos: ModeloData[];
+  dataAnos: AnoData[];
+  dataForm: any;
+  setDataForm: Dispatch<SetStateAction<any>>;
+  buscaValor: () => Promise<void>;
+  dataValor: ValorData;
 }
 
 interface FipeProviderProps {
@@ -19,50 +29,48 @@ interface FipeProviderProps {
 
 const FipeContext = createContext<FipeContextData>({} as FipeContextData);
 export const FipeProvider = ({ children }: FipeProviderProps) => {
-  async function getCarros() {
-    const dataCarros = await fetch(
-      `https://parallelum.com.br/fipe/api/v1/carros/marcas`
-    );
+  const [dataMarcas, setDataMarcas] = useState<MarcasData[]>([]);
+  const [dataModelos, setDataModelos] = useState<ModeloData[]>([]);
+  const [dataAnos, setDataAnos] = useState<AnoData[]>([]);
+  const [dataForm, setDataForm] = useState({
+    idMarca: "",
+    idModelo: "",
+    idAno: "",
+  });
+  const [dataValor, setDataValor] = useState<ValorData>();
 
-    if (!dataCarros.ok) {
-      throw new Error("Failed to fetch data");
-    }
-
-    return dataCarros.json();
-  }
   async function getMarcas() {
-    const dataMarcas = await fetch(
+    const responseMarcas = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas`
     );
 
-    if (!dataMarcas.ok) {
+    if (!responseMarcas.ok) {
       throw new Error("Failed to fetch data");
     }
-
-    return dataMarcas.json();
+    return responseMarcas.json();
   }
   async function getModelos(idMarca: string) {
-    const dataModelos = await fetch(
+    const responseModelos = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas/${idMarca}/modelos`
     );
 
-    if (!dataModelos.ok) {
+    if (!responseModelos.ok) {
       throw new Error("Failed to fetch data");
     }
 
-    return dataModelos.json();
+    return responseModelos.json();
   }
 
   async function getAnos(idMarca: string, idModelo: string) {
-    const dataAnos = await fetch(
+    const responseAnos = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas/${idMarca}/modelos/${idModelo}/anos`
     );
 
-    if (!dataAnos.ok) {
+    if (!responseAnos.ok) {
       throw new Error("Failed to fetch data");
     }
 
-    return dataAnos.json();
+    return responseAnos.json();
   }
 
   async function getValor(idMarca: string, idModelo: string, idAno: string) {
@@ -77,12 +85,31 @@ export const FipeProvider = ({ children }: FipeProviderProps) => {
     return dataValor.json();
   }
 
+  async function fillModelos(idMarca: string) {
+    const data = await getModelos(idMarca);
+    setDataModelos(data.modelos as ModeloData[]);
+  }
+
+  async function fillAnos(idMarca: string, idModelo: string) {
+    const data = await getAnos(idMarca, idModelo);
+    setDataAnos(data as AnoData[]);
+  }
+
+  async function buscaValor() {
+    const data = await getValor(
+      dataForm.idMarca,
+      dataForm.idModelo,
+      dataForm.idAno
+    );
+
+    setDataValor(data as ValorData);
+  }
+
   // //USE EFFECT HOOKS
   useEffect(() => {
     const hydrate = async () => {
       try {
-        const data = await getMarcas();
-        console.log("Meu data:", data);
+        setDataMarcas((await getMarcas()) as MarcasData[]);
       } catch (e) {
         console.log("Deu errro");
       }
@@ -91,6 +118,16 @@ export const FipeProvider = ({ children }: FipeProviderProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (dataForm.idMarca !== "") {
+      fillModelos(dataForm.idMarca);
+    }
+    if (dataForm.idMarca !== "" && dataForm.idModelo !== "") {
+      fillAnos(dataForm.idMarca, dataForm.idModelo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataForm]);
+
   return (
     <FipeContext.Provider
       value={{
@@ -98,6 +135,13 @@ export const FipeProvider = ({ children }: FipeProviderProps) => {
         getModelos,
         getAnos,
         getValor,
+        dataMarcas,
+        dataModelos,
+        dataAnos,
+        dataForm,
+        setDataForm,
+        buscaValor,
+        dataValor,
       }}
     >
       {children}

@@ -7,88 +7,124 @@ import {
   InputLabel,
   FormControl,
   FormGroup,
+  Box,
+  Card,
 } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
+import { useFipeStore } from "../store/FipeStore";
 
 export default function Home() {
-  const names = [
-    "Oliver Hansen",
-    "Van Henry",
-    "April Tucker",
-    "Ralph Hubbard",
-    "Omar Alexander",
-    "Carlos Abbott",
-    "Miriam Wagner",
-    "Bradley Wilkerson",
-    "Virginia Andrews",
-    "Kelly Snyder",
-  ];
-  const [marca, setMarca] = React.useState<string[]>([]);
-  const [modelo, setModelo] = React.useState<string[]>([]);
+  const {
+    dataMarcas,
+    dataModelos,
+    dataAnos,
+    dataForm,
+    setDataForm,
+    buscaValor,
+    dataValor,
+  } = useFipeStore();
 
-  const handleChange = (event: SelectChangeEvent<typeof marca>) => {
-    const {
-      target: { value },
-    } = event;
-    setMarca(
-      // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
-    );
+  const [selectedValue] = React.useState<string[]>([]);
+
+  const handleSelectChange = (e: SelectChangeEvent<typeof selectedValue>) => {
+    const formObj = {
+      ...dataForm,
+      [e.target.name]: e.target.value !== "" ? e.target.value : null,
+    };
+
+    setDataForm({ ...formObj });
   };
+
   return (
     <Container>
       <h1>Tabela Fipe</h1>
       <h2>Consulte o valor de um veículo de forma gratuita</h2>
-      <FormGroup>
-        <FormControl>
-          <InputLabel id="demo-simple-select-label">Marca</InputLabel>
-          <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            value={marca}
-            label="Marca"
-            onChange={handleChange}
-          >
-            {names.map((name) => (
-              <MenuItem key={name} value={name}>
-                {name}
-              </MenuItem>
-            ))}
-            {/* <MenuItem value={10}>Ten</MenuItem>
-          <MenuItem value={20}>Twenty</MenuItem>
-          <MenuItem value={30}>Thirty</MenuItem> */}
-          </Select>
-        </FormControl>
-        <FormControl>
-          <InputLabel id="demo-simple-select-label2">Modelo</InputLabel>
-          <Select
-            labelId="demo-simple-select-label2"
-            id="demo-simple-select2"
-            value={modelo}
-            label="Modelo"
-            onChange={handleChange}
-          >
-            {names.map((name) => (
-              <MenuItem key={name} value={name}>
-                {name}
-              </MenuItem>
-            ))}
-            {/* <MenuItem value={10}>Ten</MenuItem>
-          <MenuItem value={20}>Twenty</MenuItem>
-          <MenuItem value={30}>Thirty</MenuItem> */}
-          </Select>
-        </FormControl>
-      </FormGroup>
+      <Box sx={{ minWidth: 275 }}>
+        <Card sx={{ backgroundColor: "primary" }}>
+          <FormGroup>
+            <FormControl>
+              <InputLabel id="labelMarca">Marca</InputLabel>
+              <Select
+                labelId="labelMarca"
+                id="marca"
+                value={dataForm.idMarca}
+                label="Marca"
+                name="idMarca"
+                onChange={handleSelectChange}
+              >
+                {dataMarcas !== undefined &&
+                  dataMarcas.map((marcas) => (
+                    <MenuItem key={marcas.codigo} value={marcas.codigo}>
+                      {marcas.nome}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl>
+              <InputLabel id="labelModelo">Modelo</InputLabel>
+              <Select
+                labelId="labelModelo"
+                id="modelo"
+                value={dataForm.idModelo}
+                label="Modelo"
+                name="idModelo"
+                onChange={handleSelectChange}
+              >
+                {dataModelos !== undefined &&
+                  dataModelos.map((modelos) => (
+                    <MenuItem key={modelos.codigo} value={modelos.codigo}>
+                      {modelos.nome}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            {dataForm.idModelo !== "" && (
+              <FormControl>
+                <InputLabel id="labelAno">Ano</InputLabel>
+                <Select
+                  labelId="labelAno"
+                  id="ano"
+                  value={dataForm.idAno}
+                  label="Ano"
+                  name="idAno"
+                  onChange={handleSelectChange}
+                >
+                  {dataAnos !== undefined &&
+                    dataAnos.map((ano) => (
+                      <MenuItem key={ano.codigo} value={ano.codigo}>
+                        {ano.nome}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+          </FormGroup>
 
-      <Button variant="contained" disabled={true}>
-        Consultar preço
-      </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            disabled={
+              dataForm.idMarca == "" ||
+              dataForm.idModelo == "" ||
+              dataForm.idAno == ""
+            }
+            onClick={buscaValor}
+          >
+            Consultar preço
+          </Button>
+        </Card>
+      </Box>
+
+      {dataValor !== undefined && (
+        <Box>
+          <h1>
+            Tabela Fipe: Preço {dataValor.Marca} {dataValor.Modelo}{" "}
+            {dataValor.AnoModelo}{" "}
+          </h1>
+          <h2> {dataValor.Valor}</h2>
+          Este é o preço de compra do veículo
+        </Box>
+      )}
     </Container>
-    // <div>
-    //   <h1>Hello, Home page!</h1>
-    //   <Button variant="contained" color="secondary">
-    //     Testando o botão
-    //   </Button>
-    // </div>
   );
 }
