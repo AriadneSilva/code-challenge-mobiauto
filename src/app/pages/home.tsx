@@ -5,8 +5,6 @@ import {
   FormControl,
   FormGroup,
   Typography,
-  Backdrop,
-  CircularProgress,
 } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import CardResult from "../components/CardResult";
@@ -37,16 +35,6 @@ export default function Home() {
     setDataForm({ ...formObj });
   };
 
-  {
-    /* <Backdrop
-  sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-  open={open}
-  onClick={handleClose}
->
-  <CircularProgress color="inherit" />
-</Backdrop> */
-  }
-
   return (
     <>
       <h1>Tabela Fipe</h1>
@@ -58,6 +46,7 @@ export default function Home() {
             <Select
               labelId="labelMarca"
               id="marca"
+              data-testid="selectMarca"
               value={dataForm.idMarca}
               label="Marca"
               name="idMarca"
@@ -79,6 +68,7 @@ export default function Home() {
               value={dataForm.idModelo}
               label="Modelo"
               name="idModelo"
+              data-testid="selectModelo"
               onChange={handleSelectChange}
             >
               {dataModelos !== undefined &&
@@ -98,6 +88,7 @@ export default function Home() {
                 value={dataForm.idAno}
                 label="Ano"
                 name="idAno"
+                data-testid="selectAno"
                 onChange={handleSelectChange}
               >
                 {dataAnos !== undefined &&
@@ -114,6 +105,7 @@ export default function Home() {
         <Button
           variant="contained"
           color="primary"
+          data-testid="btnBusca"
           disabled={
             dataForm.idMarca == "" ||
             dataForm.idModelo == "" ||
