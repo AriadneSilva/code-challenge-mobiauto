@@ -13,14 +13,10 @@ import { FipeProvider } from "./store/FipeStore";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
-interface PageProps extends AppProps {
-  emotionCache?: EmotionCache;
-}
 
-export default function Page(props: PageProps) {
-  const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
+export default function Page() {
   return (
-    <CacheProvider value={emotionCache}>
+    <>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
@@ -30,6 +26,6 @@ export default function Page(props: PageProps) {
           <Home />
         </FipeProvider>
       </ThemeProvider>
-    </CacheProvider>
+    </>
   );
 }
