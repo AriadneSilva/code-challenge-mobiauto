@@ -20,8 +20,3 @@ export type ValorData = {
   Valor: string;
 };
 
-export interface ConsultaFormValues {
-  marca: string[] | undefined;
-  modelo: string;
-  idAno: string;
-}

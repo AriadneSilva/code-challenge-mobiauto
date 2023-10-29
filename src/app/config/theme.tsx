@@ -4,14 +4,24 @@ import { createTheme } from "@mui/material/styles";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#ba0e11",
+      main: "#5d00bf",
     },
     secondary: {
       main: "#00bcba",
     },
   },
-  typography: {
-    fontFamily: "Roboto",
+  components: {
+    MuiTypography: {
+      variants: [
+        {
+          props: { variant: "caption" } /* component props */,
+          style: {
+            fontSize: 12,
+            color: "#9f9e9e",
+          },
+        },
+      ],
+    },
   },
 });
 export default theme;
