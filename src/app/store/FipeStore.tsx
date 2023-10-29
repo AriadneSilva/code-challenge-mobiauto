@@ -4,13 +4,22 @@ import React, {
   useEffect,
   useState,
   useContext,
+  SetStateAction,
+  Dispatch,
 } from "react";
 
+import { AnoData, MarcasData, ModeloData, ValorData } from "../types/fipe";
+
+import { Backdrop, CircularProgress } from "@mui/material";
+
 interface FipeContextData {
-  getMarcas: () => Promise<void>;
-  getModelos: (idMarca: string) => Promise<void>;
-  getAnos: (idMarca: string, idModelo: string) => Promise<void>;
-  getValor: (idMarca: string, idModelo: string, idAno: string) => Promise<void>;
+  dataMarcas: MarcasData[];
+  dataModelos: ModeloData[];
+  dataAnos: AnoData[];
+  dataForm: any;
+  dataValor: ValorData | undefined;
+  setDataForm: Dispatch<SetStateAction<any>>;
+  retornaValor: () => Promise<void>;
 }
 
 interface FipeProviderProps {
@@ -19,85 +28,131 @@ interface FipeProviderProps {
 
 const FipeContext = createContext<FipeContextData>({} as FipeContextData);
 export const FipeProvider = ({ children }: FipeProviderProps) => {
-  async function getCarros() {
-    const dataCarros = await fetch(
+  const [isLoading, setLoading] = useState(true);
+  const [dataMarcas, setDataMarcas] = useState<MarcasData[]>([]);
+  const [dataModelos, setDataModelos] = useState<ModeloData[]>([]);
+  const [dataAnos, setDataAnos] = useState<AnoData[]>([]);
+  const [dataForm, setDataForm] = useState({
+    idMarca: "",
+    idModelo: "",
+    idAno: "",
+  });
+  const [dataValor, setDataValor] = useState<ValorData>();
+
+  async function buscaMarcas() {
+    const responseMarcas = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas`
     );
 
-    if (!dataCarros.ok) {
-      throw new Error("Failed to fetch data");
+    if (!responseMarcas.ok) {
+      throw new Error("Falha ao buscar as marcas");
     }
-
-    return dataCarros.json();
+    return responseMarcas.json();
   }
-  async function getMarcas() {
-    const dataMarcas = await fetch(
-      `https://parallelum.com.br/fipe/api/v1/carros/marcas`
-    );
-
-    if (!dataMarcas.ok) {
-      throw new Error("Failed to fetch data");
-    }
-
-    return dataMarcas.json();
-  }
-  async function getModelos(idMarca: string) {
-    const dataModelos = await fetch(
+  async function buscaModelos(idMarca: string) {
+    const responseModelos = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas/${idMarca}/modelos`
     );
 
-    if (!dataModelos.ok) {
-      throw new Error("Failed to fetch data");
+    if (!responseModelos.ok) {
+      throw new Error("Falha ao buscar os modelos");
     }
 
-    return dataModelos.json();
+    return responseModelos.json();
   }
 
-  async function getAnos(idMarca: string, idModelo: string) {
-    const dataAnos = await fetch(
+  async function buscaAnos(idMarca: string, idModelo: string) {
+    const responseAnos = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas/${idMarca}/modelos/${idModelo}/anos`
     );
 
-    if (!dataAnos.ok) {
-      throw new Error("Failed to fetch data");
+    if (!responseAnos.ok) {
+      throw new Error("Falha ao buscar os anos");
     }
 
-    return dataAnos.json();
+    return responseAnos.json();
   }
 
-  async function getValor(idMarca: string, idModelo: string, idAno: string) {
-    const dataValor = await fetch(
+  async function buscaValor(idMarca: string, idModelo: string, idAno: string) {
+    const responseValor = await fetch(
       `https://parallelum.com.br/fipe/api/v1/carros/marcas/${idMarca}/modelos/${idModelo}/anos/${idAno}`
     );
 
-    if (!dataValor.ok) {
-      throw new Error("Failed to fetch data");
+    if (!responseValor.ok) {
+      throw new Error("Falha ao buscar o valor");
     }
 
-    return dataValor.json();
+    return responseValor.json();
+  }
+
+  async function fillMarcas() {
+    setLoading(true);
+    const data = await buscaMarcas();
+    setDataMarcas(data as MarcasData[]);
+    setLoading(false);
+  }
+
+  async function fillModelos(idMarca: string) {
+    const data = await buscaModelos(idMarca);
+    setDataModelos(data.modelos as ModeloData[]);
+  }
+
+  async function fillAnos(idMarca: string, idModelo: string) {
+    const data = await buscaAnos(idMarca, idModelo);
+    setDataAnos(data as AnoData[]);
+  }
+
+  async function retornaValor() {
+    setLoading(true);
+    const data = await buscaValor(
+      dataForm.idMarca,
+      dataForm.idModelo,
+      dataForm.idAno
+    );
+
+    setDataValor(data as ValorData);
+    setLoading(false);
   }
 
   // //USE EFFECT HOOKS
   useEffect(() => {
     const hydrate = async () => {
       try {
-        const data = await getMarcas();
-        console.log("Meu data:", data);
+        fillMarcas();
       } catch (e) {
-        console.log("Deu errro");
+        console.log("Erro ao carregar as marcas");
       }
     };
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
+  useEffect(() => {
+    if (dataForm.idMarca !== "") {
+      fillModelos(dataForm.idMarca);
+    }
+    if (dataForm.idMarca !== "" && dataForm.idModelo !== "") {
+      fillAnos(dataForm.idMarca, dataForm.idModelo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataForm]);
+
+  return isLoading ? (
+    <>
+      <Backdrop sx={{ color: "#fff" }} open={isLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+    </>
+  ) : (
     <FipeContext.Provider
       value={{
-        getMarcas,
-        getModelos,
-        getAnos,
-        getValor,
+        dataMarcas,
+        dataModelos,
+        dataAnos,
+        dataForm,
+        dataValor,
+        setDataForm,
+        retornaValor,
       }}
     >
       {children}
